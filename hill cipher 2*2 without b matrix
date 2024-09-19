@@ -1,0 +1,99 @@
+#include <stdio.h>
+#include <string.h>
+
+int gcdExtended(int a, int b, int *x, int *y) {
+    if (a == 0) {
+        *x = 0;
+        *y = 1;
+        return b;
+    }
+    int x1, y1;
+    int gcd = gcdExtended(b % a, a, &x1, &y1);
+    *x = y1 - (b / a) * x1;
+    *y = x1;
+    return gcd;
+}
+
+int modInverse(int a, int m) {
+    int x, y;
+    int g = gcdExtended(a, m, &x, &y);
+    if (g != 1) {
+        printf("Modular inverse does not exist");
+        return -1;
+    } else {
+        int res = (x % m + m) % m;
+        return res;
+    }
+}
+
+int main() {
+    unsigned int a[2][2] = { { 3, 3 }, { 2, 5 } };
+
+    unsigned int c[20], d[20];
+    char msg[20];
+    int i, j, t;
+
+    int determinant = (a[0][0] * a[1][1] - a[0][1] * a[1][0]) % 26;
+    if (determinant < 0) {
+        determinant += 26;
+    }
+
+    int determinant_inv = modInverse(determinant, 26);
+    if (determinant_inv == -1) {
+        return 1;
+    }
+
+    unsigned int inv_a[2][2];
+    inv_a[0][0] = (a[1][1] * determinant_inv) % 26;
+    inv_a[0][1] = ((-a[0][1] + 26) * determinant_inv) % 26;
+    inv_a[1][0] = ((-a[1][0] + 26) * determinant_inv) % 26;
+    inv_a[1][1] = (a[0][0] * determinant_inv) % 26;
+
+    printf("Enter plain text (multiple of 2 characters recommended): ");
+    scanf("%s", msg);
+
+    int len = strlen(msg);
+    if (len % 2 != 0) {
+        msg[len] = 'X';
+        msg[len + 1] = '\0';
+        len++;
+    }
+
+    printf("\nOriginal Plaintext: %s\n", msg);
+
+    for (int k = 0; k < len; k += 2) {
+        for (i = 0; i < 2; i++) {
+            c[i] = msg[k + i] - 'A';
+        }
+
+        for (i = 0; i < 2; i++) {
+            t = 0;
+            for (j = 0; j < 2; j++) {
+                t += a[i][j] * c[j];
+            }
+            d[i] = t % 26;
+        }
+
+        printf("Encrypted Cipher Text: ");
+        for (i = 0; i < 2; i++) {
+            printf("%c", d[i] + 'A');
+        }
+        printf("\n");
+
+        for (i = 0; i < 2; i++) {
+            t = 0;
+            for (j = 0; j < 2; j++) {
+                t += inv_a[i][j] * d[j];
+            }
+            c[i] = t % 26;
+        }
+
+        printf("Decrypted Cipher Text: ");
+        for (i = 0; i < 2; i++) {
+            printf("%c", c[i] + 'A');
+        }
+        printf("\n");
+    }
+
+    return 0;
+}
